@@ -14,24 +14,30 @@ def main():
     win = GraphWin("Bad boy tracker", 500, 300)
     win.setBackground("white")
 
-
-    # Label for file entry
-    file_label = Text(Point(80, 90), "CSV file:")
+    # Label for file entry (left side)
+    file_label = Text(Point(87, 80), "CSV file")
     file_label.draw(win)
 
-    # Entry box for file name
-    file_entry = Entry(Point(240, 90), 25)  # center x=240, width=25 chars
-    file_entry.setText("matches.csv")       # default suggestion
+    # Entry box for file name (left side)
+    file_entry = Entry(Point(87, 100), 10)  # centre x=180
+    file_entry.setText("mydata.csv")        # default suggestion
     file_entry.draw(win)
 
-    # Load CSV button (rectangle + text)
-    load_rect = Rectangle(Point(360, 70), Point(460, 110))
-    load_rect.setFill("lightgray")
-    load_rect.draw(win)
-    load_text = Text(load_rect.getCenter(), "Load CSV")
-    load_text.draw(win)
+    # LEFT button: load CSV from what the user typed
+    load_rect_left = Rectangle(Point(60, 120), Point(110, 150))
+    load_rect_left.setFill("lightgray")
+    load_rect_left.draw(win)
+    load_text_left = Text(load_rect_left.getCenter(), "Load ")
+    load_text_left.draw(win)
 
-    # Status message at the bottom
+    # RIGHT button: always load matches.csv
+    load_rect_right = Rectangle(Point(280, 80), Point(460, 120))
+    load_rect_right.setFill("lightgray")
+    load_rect_right.draw(win)
+    load_text_right = Text(load_rect_right.getCenter(), "Load matches.csv")
+    load_text_right.draw(win)
+
+    # Status text at the bottom
     status = Text(Point(250, 250), "Status: Waiting...")
     status.draw(win)
 
@@ -42,8 +48,8 @@ def main():
     while True:
         click_point = win.getMouse()
 
-        # If user clicks inside the Load CSV button
-        if clicked(load_rect, click_point):
+        # If user clicks inside the LEFT button (load from input)
+        if clicked(load_rect_left, click_point):
             filename = file_entry.getText().strip()
             try:
                 with open(filename, "r", encoding="utf-8") as f:
@@ -51,7 +57,18 @@ def main():
                     rows = [row for row in reader]
                 status.setText(f"Status: Loaded {len(rows)} rows from {filename}")
             except:
-                status.setText("Status: ERROR - could not open file")
+                status.setText("Status: ERROR - could not open file from input")
+
+        # If user clicks inside the RIGHT button (always matches.csv)
+        if clicked(load_rect_right, click_point):
+            filename = "matches.csv"
+            try:
+                with open(filename, "r", encoding="utf-8") as f:
+                    reader = csv.DictReader(f)
+                    rows = [row for row in reader]
+                status.setText(f"Status: Loaded {len(rows)} rows from {filename}")
+            except:
+                status.setText("Status: ERROR - could not open matches.csv")
 
         # Simple way to exit: click in bottom-right corner area
         if click_point.x > 450 and click_point.y > 260:
@@ -59,4 +76,6 @@ def main():
 
     win.close()
 
+
 main()
+
