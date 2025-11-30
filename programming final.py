@@ -28,12 +28,12 @@ def draw_load_screen(win):
     """
     ui = {}
 
-    # Label for file entry (left side)
+    # Label for file entry (left label)
     file_label = Text(Point(87, 50), "CSV file")
     file_label.draw(win)
     ui["file_label"] = file_label
 
-    # Entry box for file name (left side)
+    # Entry box for file name (left inpur)
     file_entry = Entry(Point(87, 70), 10)
     file_entry.setText("mydata.csv")
     file_entry.draw(win)
@@ -63,14 +63,75 @@ def draw_load_screen(win):
     return ui
 
 
+def ask_num_variables_page(win):
+    
+   
+     """
+    Replace the current contents of 'win' with a new page asking
+    'How many variables (1–3)?'.
+    Returns the chosen integer, or None if the user exits.
+    """
+
+    # "Clear" the old page by drawing a big white rectangle on top
+    bg = Rectangle(Point(0, 0), Point(500, 300))
+    bg.setFill("white")
+    bg.draw(win)
+
+    # Question label
+    label = Text(Point(250, 80), "How many variables (1–3)?")
+    label.draw(win)
+
+    # Entry box
+    entry = Entry(Point(250, 110), 3)
+    entry.setText("2")
+    entry.draw(win)
+
+    # Confirm button
+    btn_rect = Rectangle(Point(200, 140), Point(300, 180))
+    btn_rect.setFill("lightgray")
+    btn_rect.draw(win)
+    btn_text = Text(btn_rect.getCenter(), "Set # variables")
+    btn_text.draw(win)
+
+    # Status text for this page
+    status2 = Text(Point(250, 220), "")
+    status2.draw(win)
+
+    num_variables = None
+
+    while True:
+        p = win.getMouse()
+
+        # Click on button?
+        if clicked(btn_rect, p):
+            txt = entry.getText().strip()
+            try:
+                n = int(txt)
+                if 1 <= n <= 3:
+                    num_variables = n
+                    status2.setText(f"Number of variables set to {n}")
+                    break
+                else:
+                    status2.setText("ERROR: enter 1, 2, or 3")
+            except:
+                status2.setText("ERROR: not a valid integer")
+
+        # Exit by clicking bottom-right corner of this page
+        if p.x > 450 and p.y > 260:
+            break
+
+    return num_variables
+
+
 def event_loop(win, ui):
     """
     Handle user interaction on the load screen.
-    Returns (rows, headers) for the last successfully loaded file,
-    or (None, None) if user exits without loading.
+    Returns (rows, headers, num_variables) for the last successfully loaded file,
+    or (None, None, None) if user exits without loading.
     """
     rows = None
     headers = None
+    num_variables = None
 
     file_entry = ui["file_entry"]
     load_rect_left = ui["load_rect_left"]
@@ -87,7 +148,15 @@ def event_loop(win, ui):
             if rows is None:
                 status.setText("Status: ERROR - could not open file")
             else:
-                status.setText(f"Status: Loaded {len(rows)} rows from " + filename)
+                status.setText(f"Status: Loaded {len(rows)} rows from {filename}")
+
+                # --- hide everything from the first page ---
+                for item in ui.values():
+                    item.undraw()
+
+                # now show the "how many variables" page
+                num_variables = ask_num_variables_page(win)
+                return rows, headers, num_variables
 
         # RIGHT button: always load matches.csv
         if clicked(load_rect_right, click_point):
@@ -95,27 +164,36 @@ def event_loop(win, ui):
             if rows is None:
                 status.setText("Status: ERROR - could not open matches.csv")
             else:
-                status.setText("Status: Loaded " + str(len(rows)) + " rows from matches.csv")
+                status.setText(
+                    "Status: Loaded " + str(len(rows)) + " rows from matches.csv"
+                )
 
-        # Exit condition (bottom-right click)
+                # --- hide everything from the first page ---
+                for item in ui.values():
+                    item.undraw()
+
+                # now show the "how many variables" page
+                num_variables = ask_num_variables_page(win)
+                return rows, headers, num_variables
+
+        # Exit condition from the load screen (bottom-right click)
         if click_point.x > 450 and click_point.y > 260:
-            break
-
-    return rows, headers
-
+            return None, None, None
 
 def main():
     win = GraphWin("Bad boy tracker", 500, 300)
     win.setBackground("white")
 
     ui = draw_load_screen(win)
-    rows, headers = event_loop(win, ui)
+    rows, headers, num_variables = event_loop(win, ui)
 
-    # later you will pass rows/headers into the next part of the app, e.g. graph screen
+    # Later you will use rows, headers, num_variables to select X/Y and plot.
 
     win.close()
 
 
+
 main()
+
 
 
